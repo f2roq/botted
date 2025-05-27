@@ -3,19 +3,19 @@ const { formatNumber } = require('../util/Util');
 
 module.exports = [
 	{
-		text: 'Rune Factory 4',
+		text: 'Tomb Raider',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'Rune Factory 4 Special',
+		text: 'Tomb Raider Anniversary',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with your heart',
+		text: 'Tomb Raider (VI) The Angel of Darkness',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'you eat pant',
+		text: 'Mr. Robot',
 		type: ActivityType.Watching
 	},
 	{
@@ -23,39 +23,39 @@ module.exports = [
 		type: ActivityType.Watching
 	},
 	{
-		text: 'over the inn',
+		text: 'YOU.',
 		type: ActivityType.Watching
 	},
 	{
-		text: 'at the inn',
+		text: 'Disco Elysium',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'in Selphia',
+		text: 'Silent Hill 2',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with Amber',
+		text: 'Silent Hill',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with a cardboard box',
+		text: 'with bynwkyow',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'in the fridge',
+		text: 'with Riven',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with a knife',
+		text: 'with Irelia',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with a murderous cow',
+		text: 'with a mind',
 		type: ActivityType.Playing
 	},
 	{
-		text: 'with a linter',
+		text: 'with a mask',
 		type: ActivityType.Playing
 	},
 	{
