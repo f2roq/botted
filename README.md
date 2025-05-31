@@ -1,49 +1,4 @@
-## Agreement
 
-Just read `LICENSE.md`. Give credit if you use any part of this monster, thanks.
-
-## FAQ
-
-> Will Xiao ever be public again?
-
-[No. :)](https://discord.com/api/oauth2/authorize?client_id=1219787468614795295&scope=bot&permissions=8)
-
-> Will Xiao ever support Slash Commands?
-
-Most likely, no. Many of the commands in Xiao were written with the message content intent in mind,
-and given her status as a private bot I see no reason to change that. Plus, kitchen-sink bots
-really _don't_ work with Slash Commands, they just clog up the list.
-
-> Can I use part of Xiao's code (i.e. a command) in my bot?
-
-I don't really care, but please give credit in some form if you do so. You'll also be subject to
-`LICENSE.md`, and I won't provide you with any support if it doesn't work.
-
-> Can I host Xiao myself?
-
-If you want, good luck. Setting her up is a pretty difficult task.
-
-> Do I need every API key, emoji ID, etc.?
-
-No, but some commands may not work without them.
-
-> Do I need to set up Redis?
-
-Yes, several commands and functions rely on it.
-
-> Do I really need to install Wine and Wine32 on Linux?
-
-Only if you want to use the DECTalk command.
-
-> Where can I find DECTalk?
-
-Good question! I don't even remember where I found it, and I really can't help you. While it's
-probably considered abandonware and I doubt anyone would go after a private Discord bot of all
-things, I'm not taking any chances.
-
-## Installing
-
-### Filling Out `.env`
 #### Discord-related info
 * `XIAO_TOKEN` is the token of your bot. You can get this at the [Discord Developer Portal](https://discord.com/developers/applications).
 * `OWNERS` is the Discord user IDs of users you want to have access to sensitive commands. Be careful putting anyone but yourself here.
