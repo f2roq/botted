@@ -5,7 +5,7 @@ module.exports = class ModuleExemptCommand extends Command {
 	constructor(client) {
 		super(client, {
 			name: 'moduleexempt',
-			aliases: ['exempt'],
+			aliases: ['exempt', 'module-exempt'],
 			group: 'protection',
 			description: 'Configure exemptions for specific users from protection modules',
 			guildOnly: true,
@@ -16,85 +16,96 @@ module.exports = class ModuleExemptCommand extends Command {
 					type: 'string',
 					oneOf: ['add', 'remove', 'list', 'clear'],
 					prompt: 'What would you like to do? (add/remove/list/clear)',
-					default: 'list'
+					default: 'list',
+					examples: ['add', 'remove', 'list', 'clear']
 				},
 				{
 					key: 'user',
 					type: 'user',
-					prompt: 'Which user would you like to exempt?',
-					default: ''
+					prompt: 'Which user would you like to exempt from protection modules?',
+					default: '',
+					examples: ['@username', 'username#1234', '123456789012345678']
 				},
 				{
 					key: 'module',
 					type: 'string',
-					prompt: 'Which module should this user be exempt from? (Use "all" for all modules)',
-					default: ''
+					prompt: 'Which protection module should this user be exempt from? (Use "all" for all modules)',
+					default: '',
+					examples: ['antiword', 'antilinks', 'all']
 				}
 			]
 		});
 	}
 
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [add|remove|list|clear] [user] [module]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} list`,
+			`${this.client.commandPrefix}${this.name} add @username antiword`,
+			`${this.client.commandPrefix}${this.name} add @username all`,
+			`${this.client.commandPrefix}${this.name} remove @username antiword`
+		].join('\n');
+	}
+
 	async run(msg, { action, user, module }) {
 		try {
 			const guildId = msg.guild.id;
-			const exemptKey = `protection:${guildId}:moduleexempt`;
-			
-			// All available modules
+			const exemptKey = `protection:${guildId}:exempt`;
 			const modulesList = [
-				'all', 'antijoin', 'antibots', 'antidelete', 'antiperms', 'antiedit', 
+				'antijoin', 'antibots', 'antidelete', 'antiperms', 'antiedit', 
 				'antilinks', 'antiword', 'antiemoji', 'antiinvite', 'smartban', 
-				'antiraid', 'decay', 'verifybot', 'safemode', 'autocleanup', 
-				'watchdog', 'rolefreeze', 'bblack', 'threatscore', 'spam'
+				'antiraid', 'verifybot', 'safemode', 'autocleanup', 'watchdog', 
+				'all'
 			];
 			
 			if (action === 'list') {
-				// Get all user exemptions
-				const allExemptions = await this.client.redis.db.hgetall(exemptKey) || {};
-				const userExemptions = {};
+				// Get all exemptions
+				const exemptions = await this.client.redis.db.hgetall(exemptKey) || {};
 				
-				// Process the data into a more usable format
-				for (const [key, value] of Object.entries(allExemptions)) {
-					const [userId, mod] = key.split(':');
-					if (!userExemptions[userId]) {
-						userExemptions[userId] = [];
-					}
-					userExemptions[userId].push(mod);
-				}
-				
-				// Check if there are any exemptions
-				if (Object.keys(userExemptions).length === 0) {
-					return msg.reply('No user exemptions are currently configured.');
-				}
-				
-				// Create embed
 				const embed = new EmbedBuilder()
-					.setTitle('🔓 User Module Exemptions')
+					.setTitle('🛡️ Module Exemptions')
 					.setColor(0x00AE86)
-					.setDescription('Users that are exempt from specific protection modules');
+					.setDescription('Users who are exempt from specific protection modules');
 				
-				// Add each user and their exempted modules
-				for (const [userId, mods] of Object.entries(userExemptions)) {
-					try {
-						const user = await this.client.users.fetch(userId);
-						const isGlobalExempt = mods.includes('all');
-						let moduleText;
+				if (Object.keys(exemptions).length === 0) {
+					embed.addFields({ 
+						name: 'No Exemptions', 
+						value: 'There are no users exempt from protection modules', 
+						inline: false 
+					});
+				} else {
+					// Group by user ID
+					const userExemptions = {};
+					
+					for (const key in exemptions) {
+						const [userId, moduleName] = key.split(':');
 						
-						if (isGlobalExempt) {
-							moduleText = '**All protection modules**';
-						} else {
-							moduleText = mods.map(m => `\`${m}\``).join(', ');
+						if (!userExemptions[userId]) {
+							userExemptions[userId] = [];
 						}
 						
-						embed.addFields({
-							name: `${user.tag} ${isGlobalExempt ? '(Global Exempt)' : ''}`,
-							value: moduleText,
-							inline: false
-						});
-					} catch (error) {
-						// User doesn't exist anymore
-						// We should clean up the database
-						for (const mod of mods) {
-							await this.client.redis.db.hdel(exemptKey, `${userId}:${mod}`);
+						userExemptions[userId].push(moduleName);
+					}
+					
+					// Add each user to the embed
+					for (const userId in userExemptions) {
+						try {
+							const user = await this.client.users.fetch(userId);
+							embed.addFields({ 
+								name: `${user.tag} (${userId})`, 
+								value: userExemptions[userId].join(', '), 
+								inline: false 
+							});
+						} catch (error) {
+							// User not found, use ID only
+							embed.addFields({ 
+								name: `Unknown User (${userId})`, 
+								value: userExemptions[userId].join(', '), 
+								inline: false 
+							});
 						}
 					}
 				}
@@ -103,79 +114,60 @@ module.exports = class ModuleExemptCommand extends Command {
 			}
 			
 			else if (action === 'add') {
-				// Check if required arguments are provided
 				if (!user) {
 					return msg.reply('Please specify a user to exempt.');
 				}
 				
 				if (!module) {
-					return msg.reply('Please specify a module to exempt the user from.');
+					return msg.reply(`Please specify a module. Available modules: ${modulesList.join(', ')}`);
 				}
 				
-				// Check if the module is valid
 				if (!modulesList.includes(module)) {
 					return msg.reply(`Invalid module. Available modules: ${modulesList.join(', ')}`);
 				}
 				
 				if (module === 'all') {
-					// Clear any existing module-specific exemptions for this user
+					// Add exemptions for all modules
 					for (const mod of modulesList) {
-						if (mod !== 'all') {
-							await this.client.redis.db.hdel(exemptKey, `${user.id}:${mod}`);
-						}
-					}
-					// Set global exemption
-					await this.client.redis.db.hset(exemptKey, `${user.id}:all`, '1');
-					return msg.reply(`${user.tag} will now be exempt from **all** protection modules.`);
-				} else {
-					// Check if the user already has global exemption
-					const hasGlobalExempt = await this.client.redis.db.hexists(exemptKey, `${user.id}:all`);
-					if (hasGlobalExempt) {
-						return msg.reply(`${user.tag} already has a global exemption for all modules. Remove the global exemption first if you want to set module-specific exemptions.`);
+						if (mod === 'all') continue; // Skip the 'all' meta-module
+						await this.client.redis.db.hset(exemptKey, `${user.id}:${mod}`, '1');
 					}
 					
-					// Add module-specific exemption
+					return msg.reply(`${user.tag} is now exempt from all protection modules.`);
+				} else {
+					// Add exemption for specific module
 					await this.client.redis.db.hset(exemptKey, `${user.id}:${module}`, '1');
-					return msg.reply(`${user.tag} will now be exempt from the ${module} module.`);
+					return msg.reply(`${user.tag} is now exempt from the ${module} protection module.`);
 				}
 			}
 			
 			else if (action === 'remove') {
-				// Check if required arguments are provided
 				if (!user) {
 					return msg.reply('Please specify a user to remove exemption from.');
 				}
 				
 				if (!module) {
-					return msg.reply('Please specify a module to remove exemption for, or use "all" to remove all exemptions.');
+					return msg.reply(`Please specify a module. Available modules: ${modulesList.join(', ')}`);
 				}
 				
 				if (module === 'all') {
 					// Remove all exemptions for this user
 					for (const mod of modulesList) {
+						if (mod === 'all') continue; // Skip the 'all' meta-module
 						await this.client.redis.db.hdel(exemptKey, `${user.id}:${mod}`);
 					}
-					return msg.reply(`All module exemptions have been removed from ${user.tag}.`);
+					
+					return msg.reply(`All protection exemptions have been removed for ${user.tag}.`);
 				} else {
-					// Check if the module is valid
-					if (!modulesList.includes(module)) {
-						return msg.reply(`Invalid module. Available modules: ${modulesList.join(', ')}`);
-					}
-					
-					// Remove specific module exemption
-					const wasRemoved = await this.client.redis.db.hdel(exemptKey, `${user.id}:${module}`);
-					
-					if (wasRemoved === 0) {
-						return msg.reply(`${user.tag} was not exempt from the ${module} module.`);
-					}
-					
-					return msg.reply(`${user.tag} will no longer be exempt from the ${module} module.`);
+					// Remove specific exemption
+					await this.client.redis.db.hdel(exemptKey, `${user.id}:${module}`);
+					return msg.reply(`${user.tag} is no longer exempt from the ${module} protection module.`);
 				}
 			}
 			
 			else if (action === 'clear') {
 				// Confirm clear
-				await msg.reply('⚠️ Are you sure you want to clear all user exemptions? This will remove all module exemptions for all users. Reply with "yes" to confirm.');
+				await msg.reply('⚠️ Are you sure you want to clear all module exemptions? Reply with "yes" to confirm.');
 				
 				// Wait for confirmation
 				const filter = m => m.author.id === msg.author.id && m.content.toLowerCase() === 'yes';
@@ -188,7 +180,7 @@ module.exports = class ModuleExemptCommand extends Command {
 				// Clear all exemptions
 				await this.client.redis.db.del(exemptKey);
 				
-				return msg.reply('All user module exemptions have been cleared.');
+				return msg.reply('All module exemptions have been cleared.');
 			}
 			
 		} catch (err) {

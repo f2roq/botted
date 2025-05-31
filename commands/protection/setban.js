@@ -5,6 +5,7 @@ module.exports = class SetBanCommand extends Command {
 	constructor(client) {
 		super(client, {
 			name: 'setban',
+			aliases: ['banlimit', 'ban-limit', 'set-ban-limit'],
 			group: 'protection',
 			description: 'Set maximum ban limits and actions to take when limits are exceeded',
 			guildOnly: true,
@@ -15,120 +16,117 @@ module.exports = class SetBanCommand extends Command {
 					type: 'string',
 					oneOf: ['set', 'view', 'clear'],
 					prompt: 'What would you like to do? (set/view/clear)',
-					default: 'view'
+					default: 'view',
+					examples: ['set', 'view', 'clear']
 				},
 				{
 					key: 'limit',
 					type: 'integer',
+					prompt: 'What is the maximum number of bans allowed?',
+					default: 0,
 					min: 1,
 					max: 100,
-					prompt: 'How many bans should trigger the action? (1-100)',
-					default: 0
+					examples: [5, 10, 20]
 				},
 				{
-					key: 'response',
+					key: 'punishment',
 					type: 'string',
 					oneOf: ['ban', 'kick', 'mute', 'removerole', 'none'],
-					prompt: 'What action should be taken when the limit is reached? (ban/kick/mute/removerole/none)',
-					default: 'none'
+					prompt: 'What action should be taken when the limit is exceeded? (ban/kick/mute/removerole/none)',
+					default: 'none',
+					examples: ['ban', 'kick', 'mute', 'removerole']
 				},
 				{
-					key: 'roleId',
+					key: 'role',
 					type: 'role',
-					prompt: 'Which role should be removed? (Only required if response is "removerole")',
-					default: ''
+					prompt: 'Which role should be removed? (Only required if punishment is "removerole")',
+					default: '',
+					examples: ['@Moderator', 'Admin']
 				}
 			]
 		});
 	}
 
-	async run(msg, { action, limit, response, roleId }) {
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [set|view|clear] [limit] [ban|kick|mute|removerole|none] [role]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} view`,
+			`${this.client.commandPrefix}${this.name} set 5 kick`,
+			`${this.client.commandPrefix}${this.name} set 10 removerole @Moderator`,
+			`${this.client.commandPrefix}${this.name} clear`
+		].join('\n');
+	}
+
+	async run(msg, { action, limit, punishment, role }) {
 		try {
 			const guildId = msg.guild.id;
 			const banLimitKey = `protection:${guildId}:banlimit`;
-			const banSettingsKey = `protection:${guildId}:bansettings`;
 			
 			if (action === 'view') {
-				// Get current ban limit settings
-				const currentLimit = await this.client.redis.db.get(banLimitKey);
-				const settings = await this.client.redis.db.hgetall(banSettingsKey) || {};
+				const settings = await this.client.redis.db.hgetall(banLimitKey) || {};
 				
-				const embed = new EmbedBuilder()
-					.setTitle('⚠️ Ban Limit Settings')
-					.setColor(0x00AE86)
-					.setDescription('Current settings for ban limit protection');
+				if (!settings.limit) {
+					return msg.reply('No ban limit is currently set for this server.');
+				}
 				
-				if (!currentLimit) {
-					embed.addFields({ name: 'Status', value: 'Ban limit protection is not configured', inline: false });
-				} else {
-					embed.addFields(
-						{ name: 'Ban Limit', value: currentLimit, inline: true },
-						{ name: 'Action', value: settings.action || 'none', inline: true }
-					);
+				let responseText = `Current ban limit: **${settings.limit}** bans`;
+				
+				if (settings.punishment) {
+					responseText += `\nPunishment: **${settings.punishment}**`;
 					
-					if (settings.action === 'removerole' && settings.roleId) {
+					if (settings.punishment === 'removerole' && settings.roleId) {
 						try {
-							const role = await msg.guild.roles.fetch(settings.roleId);
-							embed.addFields({ name: 'Role to Remove', value: `${role.name} (${role.id})`, inline: true });
+							const targetRole = await msg.guild.roles.fetch(settings.roleId);
+							responseText += ` (Role: **${targetRole.name}**)`;
 						} catch (error) {
-							embed.addFields({ name: 'Role to Remove', value: `Unknown role (${settings.roleId})`, inline: true });
+							responseText += ' (Role no longer exists)';
 						}
 					}
 				}
 				
-				return msg.reply({ embeds: [embed] });
-			}
-			
-			else if (action === 'clear') {
-				// Clear ban limit settings
-				await this.client.redis.db.del(banLimitKey);
-				await this.client.redis.db.del(banSettingsKey);
-				
-				return msg.reply('Ban limit protection has been disabled.');
+				return msg.reply(responseText);
 			}
 			
 			else if (action === 'set') {
-				if (limit === 0) {
-					return msg.reply('Please specify a ban limit between 1 and 100.');
+				if (!limit) {
+					return msg.reply('Please specify a ban limit (1-100).');
 				}
 				
-				// Set ban limit
-				await this.client.redis.db.set(banLimitKey, limit.toString());
+				// Save limit
+				await this.client.redis.db.hset(banLimitKey, 'limit', limit.toString());
 				
-				// Set action
-				await this.client.redis.db.hset(banSettingsKey, 'action', response);
-				
-				// If removing a role, store the role ID
-				if (response === 'removerole') {
-					if (!roleId) {
-						return msg.reply('You must specify a role to remove when using the "removerole" action.');
+				// Save punishment
+				if (punishment) {
+					await this.client.redis.db.hset(banLimitKey, 'punishment', punishment);
+					
+					// If punishment is removerole, save the role ID
+					if (punishment === 'removerole') {
+						if (!role) {
+							return msg.reply('You must specify a role when using the "removerole" punishment.');
+						}
+						await this.client.redis.db.hset(banLimitKey, 'roleId', role.id);
 					}
-					
-					await this.client.redis.db.hset(banSettingsKey, 'roleId', roleId.id);
-					
-					return msg.reply(`Ban limit set to ${limit}. When reached, the role ${roleId.name} will be removed from the moderator.`);
 				}
 				
-				// Determine message based on action
-				let responseMessage;
-				switch (response) {
-					case 'ban':
-						responseMessage = 'the moderator will be banned';
-						break;
-					case 'kick':
-						responseMessage = 'the moderator will be kicked';
-						break;
-					case 'mute':
-						responseMessage = 'the moderator will be muted';
-						break;
-					case 'none':
-						responseMessage = 'no action will be taken (only logging)';
-						break;
-					default:
-						responseMessage = `action "${response}" will be taken`;
+				let responseText = `Ban limit has been set to **${limit}** bans`;
+				
+				if (punishment && punishment !== 'none') {
+					responseText += `, with punishment: **${punishment}**`;
+					
+					if (punishment === 'removerole' && role) {
+						responseText += ` (Role: **${role.name}**)`;
+					}
 				}
 				
-				return msg.reply(`Ban limit set to ${limit}. When reached, ${responseMessage}.`);
+				return msg.reply(responseText);
+			}
+			
+			else if (action === 'clear') {
+				await this.client.redis.db.del(banLimitKey);
+				return msg.reply('Ban limit has been cleared.');
 			}
 			
 		} catch (err) {

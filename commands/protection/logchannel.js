@@ -15,16 +15,30 @@ module.exports = class LogChannelCommand extends Command {
 					type: 'string',
 					oneOf: ['set', 'clear', 'view'],
 					prompt: 'What would you like to do? (set/clear/view)',
-					default: 'view'
+					default: 'view',
+					examples: ['set', 'clear', 'view']
 				},
 				{
 					key: 'channel',
 					type: 'channel',
 					prompt: 'Which channel should be used for protection logs?',
-					default: ''
+					default: '',
+					examples: ['#security-logs', '#mod-log']
 				}
 			]
 		});
+	}
+
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [set|clear|view] [channel]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} view`,
+			`${this.client.commandPrefix}${this.name} set #security-logs`,
+			`${this.client.commandPrefix}${this.name} clear`
+		].join('\n');
 	}
 
 	async run(msg, { action, channel }) {

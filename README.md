@@ -250,25 +250,142 @@ Total: 514
 ### Server Protection:
 
 * **protection:** View or set server protection settings.
+  * Usage: `protection [view|enable|disable|status] [module]`
+  * Examples:
+    * `protection view` - View all protection settings
+    * `protection enable` - Enable server protection
+    * `protection disable antiword` - Disable the antiword module
+
 * **trustuser:** Add or remove a user from the server's trust list with specific trust level.
+  * Usage: `trustuser [add|remove|update] <user> [level]`
+  * Examples:
+    * `trustuser add @username 3` - Add user with trust level 3
+    * `trustuser update @username 5` - Update user to trust level 5
+    * `trustuser remove @username` - Remove user from trust list
+
 * **trustlist:** Show the list of trusted users with their trust levels.
+  * Usage: `trustlist`
+  * Example: `trustlist` - Display all trusted users and their levels
+
 * **logchannel:** Set the logging channel for protection events.
+  * Usage: `logchannel [set|clear|view] [channel]`
+  * Examples:
+    * `logchannel set #security-logs` - Set logging channel
+    * `logchannel view` - View current logging channel
+    * `logchannel clear` - Remove logging channel
+
 * **notify:** Configure notification settings for protection events.
+  * Usage: `notify [dm|ping|view] [enable|disable] [all|high|medium|low]`
+  * Examples:
+    * `notify view` - View notification settings
+    * `notify dm enable high` - Enable DM notifications for high severity events
+    * `notify ping disable all` - Disable ping notifications for all events
+
 * **module:** Enable or disable specific protection modules.
+  * Usage: `module [enable|disable|list] [moduleName]`
+  * Examples:
+    * `module list` - List all protection modules
+    * `module enable antiraid` - Enable the antiraid module
+    * `module disable antilinks` - Disable the antilinks module
+
 * **rolebypass:** Add or remove roles that can bypass protection rules.
+  * Usage: `rolebypass [add|remove|list] [role] [module]`
+  * Examples:
+    * `rolebypass list` - List all role bypasses
+    * `rolebypass add @Moderator antiword` - Allow Moderator role to bypass word filter
+    * `rolebypass add @Admin all` - Allow Admin role to bypass all protection
+
 * **backup:** Create or restore server backups of channels and roles.
+  * Usage: `backup [create|restore|list|info|delete] [all|roles|channels] [label]`
+  * Examples:
+    * `backup list` - List all backups
+    * `backup create all weekly-backup` - Create a full server backup
+    * `backup restore all weekly-backup` - Restore from backup
+    * `backup delete weekly-backup` - Delete a backup
+
 * **safemode:** Enable or disable server lockdown (safe mode) during attacks.
+  * Usage: `safemode [enable|disable|status] [1-3] [reason]`
+  * Examples:
+    * `safemode status` - Check current safe mode status
+    * `safemode enable 2 "Raid in progress"` - Enable level 2 lockdown
+    * `safemode disable` - Disable safe mode
+
 * **threatscore:** Check the AI-generated threat score of a user.
+  * Usage: `threatscore <user> [view|scan|reset]`
+  * Examples:
+    * `threatscore @username scan` - Analyze and generate a threat score
+    * `threatscore @username view` - View existing threat score
+    * `threatscore @username reset` - Reset a user's threat score
+
 * **dashboard:** View the comprehensive security dashboard for the server.
+  * Usage: `dashboard`
+  * Example: `dashboard` - Display security status overview
+
 * **setban:** Set maximum ban limits and actions to take when limits are exceeded.
+  * Usage: `setban [set|view|clear] [limit] [ban|kick|mute|removerole|none] [role]`
+  * Examples:
+    * `setban view` - View current ban limit settings
+    * `setban set 5 kick` - Set limit to 5 bans then kick the moderator
+    * `setban set 10 removerole @Moderator` - Remove role after 10 bans
+    * `setban clear` - Clear ban limit settings
+
 * **setkick:** Set maximum kick limits and actions to take when limits are exceeded.
+  * Usage: `setkick [set|view|clear] [limit] [ban|kick|mute|removerole|none] [role]`
+  * Examples:
+    * `setkick view` - View current kick limit settings
+    * `setkick set 8 mute` - Set limit to 8 kicks then mute the moderator
+    * `setkick clear` - Clear kick limit settings
+
 * **warnlimit:** Set maximum warning limits and actions to take when user warnings exceed the limit.
+  * Usage: `warnlimit [set|view|clear] [limit] [ban|kick|mute|none] [duration]`
+  * Examples:
+    * `warnlimit set 3 mute 2h` - Mute users for 2 hours after 3 warnings
+    * `warnlimit set 5 ban permanent` - Ban users after 5 warnings
+    * `warnlimit view` - Check current warning limit settings
+
 * **linkwhitelist:** Manage the whitelist of allowed domains for link filtering.
+  * Usage: `linkwhitelist [add|remove|list|clear] [domain]`
+  * Examples:
+    * `linkwhitelist list` - View allowed domains
+    * `linkwhitelist add discord.com` - Add domain to whitelist
+    * `linkwhitelist remove youtube.com` - Remove domain from whitelist
+    * `linkwhitelist clear` - Clear all whitelisted domains
+
 * **moduleexempt:** Configure exemptions for specific users from protection modules.
+  * Usage: `moduleexempt [add|remove|list|clear] [user] [module]`
+  * Examples:
+    * `moduleexempt list` - List all user exemptions
+    * `moduleexempt add @username antiword` - Exempt user from word filter
+    * `moduleexempt add @username all` - Exempt user from all modules
+    * `moduleexempt clear` - Remove all exemptions
+
 * **antiword:** Manage blocked words and phrases for the server.
+  * Usage: `antiword [add|remove|list|clear|enable|disable] [word]`
+  * Examples:
+    * `antiword list` - View blocked words and phrases
+    * `antiword add badword` - Add word to the filter
+    * `antiword remove badword` - Remove word from the filter
+    * `antiword enable` - Enable word filtering
+
 * **antispam:** Configure spam protection settings.
+  * Usage: `antispam [enable|disable] [messages] [mute|kick|ban]`
+  * Examples:
+    * `antispam enable 5 mute` - Mute users sending 5+ messages in 5 seconds
+    * `antispam disable` - Disable spam protection
+
 * **undo:** Restore recently deleted categories, channels, or roles.
+  * Usage: `undo [category|text|voice|role|list] [name]`
+  * Examples:
+    * `undo list` - Show recently deleted elements
+    * `undo text general` - Restore a deleted text channel
+    * `undo role Moderator` - Restore a deleted role
+
 * **deletionmonitor:** Enable or disable tracking of deleted channels and roles.
+  * Usage: `deletionmonitor [enable|disable|status]`
+  * Examples:
+    * `deletionmonitor status` - Check if monitoring is enabled
+    * `deletionmonitor enable` - Enable deletion tracking
+    * `deletionmonitor disable` - Disable deletion tracking
 
 ### Events:
 

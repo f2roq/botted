@@ -15,16 +15,30 @@ module.exports = class ProtectionCommand extends Command {
 					type: 'string',
 					oneOf: ['view', 'enable', 'disable', 'status'],
 					prompt: 'What would you like to do? (view/enable/disable/status)',
-					default: 'view'
+					default: 'view',
+					examples: ['view', 'enable', 'disable']
 				},
 				{
 					key: 'module',
 					type: 'string',
 					prompt: 'Which protection module would you like to configure?',
-					default: ''
+					default: '',
+					examples: ['antiword', 'antilinks', 'safemode']
 				}
 			]
 		});
+	}
+
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [view|enable|disable|status] [module]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} view`,
+			`${this.client.commandPrefix}${this.name} enable`,
+			`${this.client.commandPrefix}${this.name} disable antiword`
+		].join('\n');
 	}
 
 	async run(msg, { action, module }) {

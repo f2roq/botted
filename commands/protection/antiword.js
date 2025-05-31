@@ -15,51 +15,68 @@ module.exports = class AntiWordCommand extends Command {
 					type: 'string',
 					oneOf: ['add', 'remove', 'list', 'clear', 'enable', 'disable'],
 					prompt: 'What would you like to do? (add/remove/list/clear/enable/disable)',
-					default: 'list'
+					default: 'list',
+					examples: ['add', 'remove', 'list', 'enable']
 				},
 				{
 					key: 'word',
 					type: 'string',
 					prompt: 'Which word or phrase would you like to add or remove?',
-					default: ''
+					default: '',
+					examples: ['badword', 'inappropriate phrase']
 				}
 			]
 		});
 	}
 
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [add|remove|list|clear|enable|disable] [word]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} list`,
+			`${this.client.commandPrefix}${this.name} add badword`,
+			`${this.client.commandPrefix}${this.name} remove badword`,
+			`${this.client.commandPrefix}${this.name} enable`
+		].join('\n');
+	}
+
 	async run(msg, { action, word }) {
 		try {
 			const guildId = msg.guild.id;
-			const wordListKey = `protection:${guildId}:antiword`;
 			const protectionKey = `protection:${guildId}`;
+			const wordListKey = `${protectionKey}:antiword`;
 			
 			if (action === 'list') {
 				// Get current blocked words
-				const wordList = await this.client.redis.db.smembers(wordListKey) || [];
+				const blockedWords = await this.client.redis.db.smembers(wordListKey) || [];
 				const isEnabled = await this.client.redis.db.hget(protectionKey, 'antiword') === '1';
 				
 				const embed = new EmbedBuilder()
-					.setTitle('🚫 Banned Words')
+					.setTitle('🚫 Banned Words List')
 					.setColor(isEnabled ? 0x00AE86 : 0xE74C3C)
-					.setDescription(`Antiword protection is currently **${isEnabled ? 'ENABLED' : 'DISABLED'}**\n\nUse \`antiword enable/disable\` to toggle it.`);
+					.setDescription(`Word filtering is currently **${isEnabled ? 'ENABLED' : 'DISABLED'}**`);
 				
-				if (wordList.length === 0) {
+				if (blockedWords.length === 0) {
 					embed.addFields({ 
 						name: 'Status', 
-						value: 'No words are currently blocked', 
+						value: 'No words are currently banned', 
 						inline: false 
 					});
 				} else {
-					// Sort alphabetically
-					wordList.sort();
+					// Sort words alphabetically
+					blockedWords.sort();
 					
-					// To prevent Discord from complaining about sending offensive content,
-					// censor the words by replacing middle characters with asterisks
-					const censoredWords = wordList.map(word => this.censorWord(word));
+					// Censor words for the display
+					const censoredWords = blockedWords.map(word => this.censorWord(word));
 					
 					// Split into chunks of 15 if needed
 					if (censoredWords.length > 15) {
-						const chunks = this.chunkArray(censoredWords, 15);
+						const chunks = [];
+						for (let i = 0; i < censoredWords.length; i += 15) {
+							chunks.push(censoredWords.slice(i, i + 15));
+						}
 						
 						for (let i = 0; i < chunks.length; i++) {
 							embed.addFields({ 
@@ -81,69 +98,45 @@ module.exports = class AntiWordCommand extends Command {
 				embed.addFields({ 
 					name: 'Usage', 
 					value: [
-						'`antiword add word` - Add a word to the ban list',
-						'`antiword remove word` - Remove a word from the ban list',
-						'`antiword clear` - Clear the entire word ban list',
-						'`antiword enable` - Enable antiword filtering',
-						'`antiword disable` - Disable antiword filtering'
+						'`antiword add <word>` - Add a word to the filter',
+						'`antiword remove <word>` - Remove a word from the filter',
+						'`antiword enable` - Enable the word filter',
+						'`antiword disable` - Disable the word filter',
+						'`antiword clear` - Clear all banned words'
 					].join('\n'), 
 					inline: false 
 				});
 				
-				// Send as a direct message to avoid showing the list publicly
-				try {
-					await msg.author.send({ embeds: [embed] });
-					return msg.reply('I\'ve sent you a DM with the banned word list.');
-				} catch (error) {
-					// If DM fails, send in channel but warn that it contains sensitive content
-					return msg.reply({ 
-						content: 'I couldn\'t send you a DM. Here\'s the banned word list:', 
-						embeds: [embed] 
-					});
-				}
+				return msg.reply({ embeds: [embed] });
 			}
 			
 			else if (action === 'add') {
 				if (!word) {
-					return msg.reply('Please specify a word or phrase to add to the ban list.');
+					return msg.reply('Please specify a word or phrase to ban.');
 				}
 				
-				// Add to word list
+				// Add to banned words list
 				await this.client.redis.db.sadd(wordListKey, word.toLowerCase());
 				
-				// Delete the command message to avoid keeping the word in chat
-				try {
-					await msg.delete();
-				} catch (error) {
-					// Ignore if we can't delete
-				}
-				
-				return msg.reply(`A new word has been added to the banned words list.`);
+				return msg.reply(`Word/phrase \`${this.censorWord(word)}\` has been added to the banned words list.`);
 			}
 			
 			else if (action === 'remove') {
 				if (!word) {
-					return msg.reply('Please specify a word or phrase to remove from the ban list.');
+					return msg.reply('Please specify a word or phrase to unban.');
 				}
 				
-				// Check if word exists in list
+				// Check if word exists in banned list
 				const exists = await this.client.redis.db.sismember(wordListKey, word.toLowerCase());
 				
 				if (!exists) {
-					return msg.reply(`That word is not in the banned words list.`);
+					return msg.reply(`Word/phrase \`${word}\` is not in the banned words list.`);
 				}
 				
-				// Remove from word list
+				// Remove from banned words list
 				await this.client.redis.db.srem(wordListKey, word.toLowerCase());
 				
-				// Delete the command message to avoid keeping the word in chat
-				try {
-					await msg.delete();
-				} catch (error) {
-					// Ignore if we can't delete
-				}
-				
-				return msg.reply(`A word has been removed from the banned words list.`);
+				return msg.reply(`Word/phrase \`${word}\` has been removed from the banned words list.`);
 			}
 			
 			else if (action === 'clear') {
@@ -185,13 +178,5 @@ module.exports = class AntiWordCommand extends Command {
 		
 		// Replace middle characters with asterisks, keep first and last
 		return word.charAt(0) + '*'.repeat(word.length - 2) + word.charAt(word.length - 1);
-	}
-	
-	chunkArray(array, chunkSize) {
-		const chunks = [];
-		for (let i = 0; i < array.length; i += chunkSize) {
-			chunks.push(array.slice(i, i + chunkSize));
-		}
-		return chunks;
 	}
 }; 

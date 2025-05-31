@@ -13,6 +13,14 @@ module.exports = class DashboardCommand extends Command {
 		});
 	}
 
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name}\``;
+	}
+
+	example(msg) {
+		return `${this.client.commandPrefix}${this.name}`;
+	}
+
 	async run(msg) {
 		try {
 			const guildId = msg.guild.id;

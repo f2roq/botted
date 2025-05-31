@@ -16,16 +16,30 @@ module.exports = class UndoCommand extends Command {
 					type: 'string',
 					oneOf: ['category', 'text', 'voice', 'role', 'list'],
 					prompt: 'What type of element would you like to restore? (category/text/voice/role/list)',
-					default: 'list'
+					default: 'list',
+					examples: ['category', 'text', 'role', 'list']
 				},
 				{
 					key: 'name',
 					type: 'string',
 					prompt: 'What is the name of the element you want to restore?',
-					default: ''
+					default: '',
+					examples: ['general', 'announcements', 'Moderator']
 				}
 			]
 		});
+	}
+
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} [category|text|voice|role|list] [name]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} list`,
+			`${this.client.commandPrefix}${this.name} text general`,
+			`${this.client.commandPrefix}${this.name} role Moderator`
+		].join('\n');
 	}
 
 	async run(msg, { type, name }) {

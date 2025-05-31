@@ -14,12 +14,14 @@ module.exports = class TrustUserCommand extends Command {
 					key: 'action',
 					type: 'string',
 					oneOf: ['add', 'remove', 'update'],
-					prompt: 'Would you like to add, remove, or update a user\'s trust level?'
+					prompt: 'Would you like to add, remove, or update a user\'s trust level?',
+					examples: ['add', 'remove', 'update']
 				},
 				{
 					key: 'user',
 					type: 'user',
-					prompt: 'Which user would you like to modify?'
+					prompt: 'Which user would you like to modify?',
+					examples: ['@username', 'username#1234', '123456789012345678']
 				},
 				{
 					key: 'level',
@@ -27,10 +29,23 @@ module.exports = class TrustUserCommand extends Command {
 					min: 1,
 					max: 5,
 					prompt: 'What trust level would you like to set? (1-5, where 5 is highest)',
-					default: 1
+					default: 1,
+					examples: [1, 3, 5]
 				}
 			]
 		});
+	}
+
+	usage(argString) {
+		return argString || `\`${this.client.commandPrefix}${this.name} <add|remove|update> <user> [level]\``;
+	}
+
+	example(msg) {
+		return [
+			`${this.client.commandPrefix}${this.name} add @username 3`,
+			`${this.client.commandPrefix}${this.name} update @username 5`,
+			`${this.client.commandPrefix}${this.name} remove @username`
+		].join('\n');
 	}
 
 	async run(msg, { action, user, level }) {
