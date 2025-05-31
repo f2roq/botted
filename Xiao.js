@@ -1,4 +1,8 @@
-require('dotenv').config();
+try {
+	require('dotenv').config();
+} catch (error) {
+	console.log('dotenv not found, using default environment variables');
+}
 // Provide default values for environment variables
 process.env.XIAO_TOKEN = process.env.XIAO_TOKEN || 'your_bot_token_here';
 process.env.OWNERS = process.env.OWNERS || '123456789012345678';
