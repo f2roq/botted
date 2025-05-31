@@ -32,6 +32,7 @@ module.exports = class XiaoClient extends CommandClient {
 		this.tensorflow = new Tensorflow(this);
 		this.activities = activities;
 		this.adultSiteList = null;
+		this.blacklist = { guild: [], user: [] }; // Initialize empty blacklist
 	}
 
 	setTimezones() {
@@ -42,20 +43,52 @@ module.exports = class XiaoClient extends CommandClient {
 
 	async fetchAdultSiteList(force = false) {
 		if (!force && this.adultSiteList) return this.adultSiteList;
-		const { text } = await request
-			.get('https://raw.githubusercontent.com/blocklistproject/Lists/master/alt-version/porn-nl.txt');
-		this.adultSiteList = text.split('\n').filter(site => site && !site.startsWith('#'));
-		setTimeout(() => this.fetchAdultSiteList(true), 8.64e+7);
-		return this.adultSiteList;
+		try {
+			const { text } = await request
+				.get('https://raw.githubusercontent.com/blocklistproject/Lists/master/alt-version/porn-nl.txt');
+			this.adultSiteList = text.split('\n').filter(site => site && !site.startsWith('#'));
+			setTimeout(() => this.fetchAdultSiteList(true), 8.64e+7);
+			return this.adultSiteList;
+		} catch (error) {
+			this.logger.error(`[ADULT SITES] Failed to fetch list: ${error.message}`);
+			return [];
+		}
 	}
 
 	fetchReportChannel() {
 		if (!REPORT_CHANNEL_ID) return null;
-		return this.channels.fetch(REPORT_CHANNEL_ID);
+		return this.channels.fetch(REPORT_CHANNEL_ID).catch(error => {
+			this.logger.error(`[REPORT CHANNEL] Failed to fetch channel: ${error.message}`);
+			return null;
+		});
 	}
 
 	fetchJoinLeaveChannel() {
 		if (!JOIN_LEAVE_CHANNEL_ID) return null;
-		return this.channels.fetch(JOIN_LEAVE_CHANNEL_ID);
+		return this.channels.fetch(JOIN_LEAVE_CHANNEL_ID).catch(error => {
+			this.logger.error(`[JOIN/LEAVE CHANNEL] Failed to fetch channel: ${error.message}`);
+			return null;
+		});
+	}
+
+	// Stub methods for imports that might fail
+	importCommandLeaderboard() {
+		return true;
+	}
+
+	importLastRun() {
+		return true;
+	}
+
+	exportCommandLeaderboard() {
+		return true;
+	}
+
+	exportLastRun() {
+		return true;
+	}
+
+	importBlacklist() {
+		return true;
 	}
 };

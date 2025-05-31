@@ -1,4 +1,12 @@
 require('dotenv').config();
+// Provide default values for environment variables
+process.env.XIAO_TOKEN = process.env.XIAO_TOKEN || 'your_bot_token_here';
+process.env.OWNERS = process.env.OWNERS || '123456789012345678';
+process.env.XIAO_PREFIX = process.env.XIAO_PREFIX || 'x!';
+process.env.INVITE = process.env.INVITE || 'https://discord.com/oauth2/authorize';
+process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+process.env.REDIS_PASS = process.env.REDIS_PASS || 'password';
+
 const { XIAO_TOKEN, OWNERS, XIAO_PREFIX, INVITE } = process.env;
 const { mkdir } = require('fs/promises');
 const path = require('path');
@@ -68,6 +76,7 @@ client.registry
 		['remind', 'Reminders'],
 		['phone', 'Phone'],
 		['cleverbot', 'Cleverbot'],
+		['protection', 'Server Protection'],
 		['other', 'Other']
 	])
 	.registerCommandsIn(path.join(__dirname, 'commands'));
