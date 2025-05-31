@@ -70,6 +70,13 @@ module.exports = class DashboardCommand extends Command {
 			// Get link whitelist count
 			const linkWhitelist = await this.client.redis.db.smembers(`${protectionKey}:linkwhitelist`) || [];
 			
+			// Get deletion monitor status
+			const deletionMonitorEnabled = await this.client.redis.db.get(`${protectionKey}:deletionmonitor`) === '1';
+			
+			// Get deleted items count
+			const deletedItems = await this.client.redis.db.hgetall(`${protectionKey}:deleted`) || {};
+			const deletedItemsCount = Object.keys(deletedItems).length;
+			
 			// Build the embed for overview
 			const embed = new EmbedBuilder()
 				.setTitle('🛡️ Server Protection Dashboard')
@@ -105,7 +112,9 @@ module.exports = class DashboardCommand extends Command {
 							`**Safe Mode**: ${safeModeEnabled ? `✅ Level ${safeModeData.level || '1'}` : '❌ Disabled'}`,
 							`**Spam Protection**: ${spamSettings.enabled === '1' ? '✅ Enabled' : '❌ Disabled'}`,
 							`**Word Filter**: ${antiwordList.length} blocked words`,
-							`**Link Whitelist**: ${linkWhitelist.length} allowed domains`
+							`**Link Whitelist**: ${linkWhitelist.length} allowed domains`,
+							`**Deletion Monitor**: ${deletionMonitorEnabled ? '✅ Enabled' : '❌ Disabled'}`,
+							`**Recoverable Items**: ${deletedItemsCount}`
 						].join('\n'),
 						inline: true
 					}
@@ -148,7 +157,9 @@ module.exports = class DashboardCommand extends Command {
 					'`antiword` - Manage blocked words',
 					'`antilinks` - Configure link filtering',
 					'`backup` - Manage server backups',
-					'`threatscore` - Analyze user risk'
+					'`threatscore` - Analyze user risk',
+					'`undo` - Restore deleted elements',
+					'`deletionmonitor` - Track deleted elements'
 				].join('\n'),
 				inline: false
 			});

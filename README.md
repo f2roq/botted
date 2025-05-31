@@ -267,6 +267,8 @@ Total: 514
 * **moduleexempt:** Configure exemptions for specific users from protection modules.
 * **antiword:** Manage blocked words and phrases for the server.
 * **antispam:** Configure spam protection settings.
+* **undo:** Restore recently deleted categories, channels, or roles.
+* **deletionmonitor:** Enable or disable tracking of deleted channels and roles.
 
 ### Events:
 
