@@ -247,6 +247,27 @@ Total: 514
 * **can-you-not:** Can YOU not?
 * **unflip:** Unflips a table.
 
+### Server Protection:
+
+* **protection:** View or set server protection settings.
+* **trustuser:** Add or remove a user from the server's trust list with specific trust level.
+* **trustlist:** Show the list of trusted users with their trust levels.
+* **logchannel:** Set the logging channel for protection events.
+* **notify:** Configure notification settings for protection events.
+* **module:** Enable or disable specific protection modules.
+* **rolebypass:** Add or remove roles that can bypass protection rules.
+* **backup:** Create or restore server backups of channels and roles.
+* **safemode:** Enable or disable server lockdown (safe mode) during attacks.
+* **threatscore:** Check the AI-generated threat score of a user.
+* **dashboard:** View the comprehensive security dashboard for the server.
+* **setban:** Set maximum ban limits and actions to take when limits are exceeded.
+* **setkick:** Set maximum kick limits and actions to take when limits are exceeded.
+* **warnlimit:** Set maximum warning limits and actions to take when user warnings exceed the limit.
+* **linkwhitelist:** Manage the whitelist of allowed domains for link filtering.
+* **moduleexempt:** Configure exemptions for specific users from protection modules.
+* **antiword:** Manage blocked words and phrases for the server.
+* **antispam:** Configure spam protection settings.
+
 ### Events:
 
 * **anime-airing:** Responds with a list of the anime that air today.
